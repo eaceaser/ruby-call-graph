@@ -1,0 +1,12 @@
+A simple script to generate a graph cloud from a set of ruby stack
+traces. Stack traces must be separated by a line consisting of '--',
+the output of 'grep -A' on a log file containing these stack traces.
+
+Depends on the ruby-graphviz gem, and, by extension, graphviz.
+
+Usage: ruby-call-graph.rb -i INPUT -o OUTPUT [-t THRESHOLD]
+    -i, --input INPUT                Input stack trace (- for stdin)
+    -o, --output OUTPUT              Output filename
+    -t, --threshold THRESHOLD        Edge/Node Count Threshold. Defaults to 100
+    -h, --help                       Show this message
+
