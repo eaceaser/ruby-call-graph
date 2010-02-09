@@ -16,7 +16,7 @@ class CallGraph
     end
 
     def to_s
-      (file+"::#"+method)
+      file.empty? ? method : (file+"::#"+method)
     end
 
     def eql?(rhs)
@@ -43,14 +43,14 @@ class CallGraph
     @nodes = {}
   end
 
-  def parse_stack_trace(handle)
+  def parse_stack_trace(handle, filenames)
     stack = []
     handle.each do |line|
       line.chomp!
 
       case line
       when /\/(\w+?)\.\w+:\d+:in `(.+)'$/ then
-        file = $1
+        file = filenames ? $1 : ""
         call = $2
 
         call = Call.new(file, call)
@@ -96,7 +96,7 @@ class CallGraph
   def self.parse_arguments
     args = {}
     OptionParser.new do |opts|
-      opts.banner = "Usage: ruby-call-graph.rb -i INPUT -o OUTPUT [-t THRESHOLD]"
+      opts.banner = "Usage: ruby-call-graph.rb [-n] -i INPUT -o OUTPUT [-t THRESHOLD]"
 
       opts.on("-i", "--input INPUT", "Input stack trace (- for stdin)") do |optarg|
         args[:input] = optarg
@@ -104,6 +104,10 @@ class CallGraph
 
       opts.on("-o", "--output OUTPUT", "Output filename") do |optarg|
         args[:output] = optarg
+      end
+
+      opts.on("-n", "--no-filenames", "Suppress writing of filenames") do |optarg|
+        args[:filenames] = false
       end
 
       opts.on("-t", "--threshold THRESHOLD", "Edge/Node Count Threshold. Defaults to 100") do |optarg|
@@ -128,6 +132,7 @@ class CallGraph
     end
 
    args[:threshold] = 100 if args[:threshold].nil?
+   args[:filenames] = true if args[:filenames].nil?
    args
 
   end
@@ -139,7 +144,7 @@ cg = CallGraph.new()
 
 begin
   inhandle = options[:input] == "-" ? STDIN : File.new(options[:input], "r")
-  cg.parse_stack_trace(inhandle)
+  cg.parse_stack_trace(inhandle, options[:filenames])
   cg.generate_nodes(12, 100, options[:threshold])
   cg.generate_edges(options[:threshold])
   cg.output(options[:output])
